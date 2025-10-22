@@ -3,3 +3,4 @@ secrets/
 .env
 backups/
 kafka-connect-plugins/
+data/
