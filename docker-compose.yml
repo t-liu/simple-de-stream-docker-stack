@@ -35,6 +35,12 @@ services:
       KAFKA_LOG_SEGMENT_BYTES: 1073741824
       KAFKA_LOG_RETENTION_BYTES: 1073741824
       KAFKA_COMPRESSION_TYPE: "snappy"
+      KAFKA_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: SCRAM-SHA-512
+      KAFKA_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.keystore.jks
+      KAFKA_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.truststore.jks
+      KAFKA_AUTHROIZER_CLASS_NAME: kafka.security.authroizer.AclAuthroizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
     volumes:
       - ./data/kafka:/var/lib/kafka/data
     networks:
@@ -165,4 +171,3 @@ services:
 networks:
   streaming-network:
     driver: bridge
-
