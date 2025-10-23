@@ -8,6 +8,11 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./data/zookeeper/data:/var/lib/zookeeper/data
       - ./data/zookeeper/logs:/var/lib/zookeeper/log
@@ -39,8 +44,14 @@ services:
       KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: SCRAM-SHA-512
       KAFKA_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.keystore.jks
       KAFKA_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.truststore.jks
-      KAFKA_AUTHROIZER_CLASS_NAME: kafka.security.authroizer.AclAuthroizer
+      KAFKA_AUTHROIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     volumes:
       - ./data/kafka:/var/lib/kafka/data
     networks:
@@ -129,6 +140,11 @@ services:
       GF_INSTALL_PLUGINS: ""
       GF_SERVER_ROOT_URL: http://localhost/grafana
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     volumes:
       - ./data/grafana:/var/lib/grafana
     networks:
@@ -151,11 +167,12 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--log.level=INFO"
+      - "--accesslog=true"
     ports:
       - "80:80"
-      - "8080:8080"  # Traefik Dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./logs/traefik:/var/log/traefik
     networks:
       - streaming-network
     restart: unless-stopped
